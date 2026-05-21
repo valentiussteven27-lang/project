@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Snake Game — by Steven Valentius Young</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Exo+2:wght@400;600;700;900&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ===== BODY & FONT ===== */
+    body {
+      background: #050f05;
+      color: #e2fde2;
+      font-family: 'Exo 2', sans-serif;
+    }
+
+    /* ===== NAVBAR ===== */
+    .navbar-custom {
+      background: #050f05;
+      border-bottom: 1px solid #1a3d1a;
+    }
+    .brand-text {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.85rem;
+      letter-spacing: 1px;
+      color: #fff;
+    }
+    .brand-text span { color: #22c55e; }
+
+    /* ===== HERO ===== */
+    .hero-section {
+      background: radial-gradient(ellipse at center, #0d2b0d 0%, #050f05 60%, #000 100%);
+      min-height: 100vh;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-section::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.12) 2px, rgba(0,0,0,0.12) 4px);
+      pointer-events: none;
+    }
+    .hero-section > .container { position: relative; z-index: 1; }
+
+    /* ===== TEKS ARCADE ===== */
+    .arcade-font {
+      font-family: 'Press Start 2P', monospace;
+      line-height: 1.5;
+    }
+    .text-snake {
+      color: #22c55e;
+      text-shadow: 0 0 10px rgba(34,197,94,0.5);
+    }
+
+    /* ===== CANVAS PREVIEW (hero kanan) ===== */
+    #previewCanvas {
+      border: 2px solid #22c55e;
+      border-radius: 8px;
+      box-shadow: 0 0 28px rgba(34,197,94,0.4);
+      background: #050f05;
+    }
+
+    /* ===== FITUR CARD ===== */
+    .feature-card {
+      background: #0d1f0d;
+      border: 1px solid #1a3d1a !important;
+      transition: all 0.3s ease;
+    }
+    .feature-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 0 20px rgba(34,197,94,0.2) !important;
+    }
+
+    /* ===== SECTION GARIS ACCENT ===== */
+    .section-accent {
+      width: 60px;
+      height: 4px;
+      background: #22c55e;
+      border-radius: 2px;
+      box-shadow: 0 0 8px rgba(34,197,94,0.5);
+    }
+
+    /* ===== AVATAR PEMBUAT ===== */
+    .avatar-ring {
+      border: 4px solid #22c55e;
+      padding: 4px;
+      border-radius: 50%;
+      box-shadow: 0 0 20px rgba(34,197,94,0.3);
+    }
+
+    /* ===== FADE-IN SAAT SCROLL ===== */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .fade-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ===== COUNTER ANGKA ===== */
+    .score-ticker {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.6rem;
+    }
+
+    /* ===== BLINKING CURSOR ===== */
+    .blink {
+      animation: blink 1s step-end infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0; }
+    }
+
+    /* ===== FOOTER ===== */
+    footer {
+      background: #050f05;
+      border-top: 1px solid #1a3d1a;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== NAVBAR ===== -->
+  <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
+    <div class="container">
+      <a class="navbar-brand brand-text" href="index.html">SNAKE<span>.GAME</span></a>
+      <button class="navbar-toggler border-success" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navMenu">
+        <ul class="navbar-nav ms-auto gap-2">
+          <li class="nav-item"><a class="nav-link fw-semibold" style="color:#22c55e;" href="index.html">Home</a></li>
+          <li class="nav-item"><a class="nav-link" style="color:#a3e6a3;" href="profile.html">Main Game</a></li>
+          <li class="nav-item"><a class="nav-link" style="color:#a3e6a3;" href="contact.html">Feedback</a></li>
+          <li class="nav-item ms-2">
+            <a class="btn btn-success fw-bold px-3" href="profile.html">
+              <i class="bi bi-play-fill me-1"></i>Play Now
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===== HERO ===== -->
+  <section class="hero-section d-flex align-items-center">
+    <div class="container py-5">
+      <div class="row align-items-center">
+
+        <!-- Kiri: Teks -->
+        <div class="col-lg-7">
+          <div class="mb-3 fade-in">
+            <span class="badge px-3 py-2 me-2" style="background:#0d2b0d; color:#22c55e; border:1px solid #22c55e;">
+              <span class="blink">&#9632;</span> FREE TO PLAY
+            </span>
+            <span class="badge px-3 py-2" style="background:#2b0d0d; color:#ef4444; border:1px solid #ef4444;">
+              HIGH SCORE CHALLENGE
+            </span>
+          </div>
+          <h1 class="arcade-font text-snake mb-3 fade-in" style="font-size:2.8rem;">SNAKE<br>GAME</h1>
+          <p class="lead fade-in" style="color:#a3e6a3;">Kendalikan ular, kumpulkan makanan, raih skor tertinggi!</p>
+          <p class="text-secondary mb-4 fade-in">
+            Game klasik yang tak lekang oleh waktu — level makin menantang, animasi smooth, dan sistem high score.
+            Dibuat oleh <span style="color:#22c55e; font-weight:700;">Steven Valentius Young</span>.
+          </p>
+          <div class="d-flex gap-3 flex-wrap fade-in">
+            <a href="profile.html" class="btn btn-success btn-lg px-4 fw-bold">
+              <i class="bi bi-play-fill me-2"></i>Main Sekarang
+            </a>
+            <a href="contact.html" class="btn btn-outline-success btn-lg px-4">
+              <i class="bi bi-trophy me-2"></i>Kirim Feedback
+            </a>
+          </div>
+        </div>
+
+        <!-- Kanan: Preview Canvas (ular berjalan otomatis) -->
+        <div class="col-lg-5 text-center mt-5 mt-lg-0 fade-in">
+          <canvas id="previewCanvas" width="280" height="280"></canvas>
+          <p class="mt-2 small" style="color:#4ade80;">Preview — ular berjalan otomatis</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FITUR GAME ===== -->
+  <section class="py-5" style="background:#080f08;">
+    <div class="container py-4">
+      <div class="text-center mb-5 fade-in">
+        <h2 class="arcade-font text-snake" style="font-size:1.3rem;">FITUR GAME</h2>
+        <div class="section-accent mx-auto mt-3"></div>
+      </div>
+      <div class="row g-4">
+
+        <div class="col-lg-3 col-md-6 fade-in">
+          <div class="card border-0 h-100 p-4 text-center feature-card">
+            <div class="p-3 rounded-circle d-inline-flex mx-auto mb-3" style="background:#0d2b0d;">
+              <i class="bi bi-lightning-fill fs-2 text-snake"></i>
+            </div>
+            <h5 class="fw-bold mb-2" style="color:#a3e6a3;">Level Dinamis</h5>
+            <p class="text-secondary small mb-0">Kecepatan ular bertambah setiap naik level — makin tinggi skor, makin menegangkan!</p>
+          </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 fade-in">
+          <div class="card border-0 h-100 p-4 text-center feature-card">
+            <div class="p-3 rounded-circle d-inline-flex mx-auto mb-3" style="background:#2b1a0d;">
+              <i class="bi bi-trophy-fill fs-2" style="color:#f59e0b;"></i>
+            </div>
+            <h5 class="fw-bold mb-2" style="color:#a3e6a3;">High Score</h5>
+            <p class="text-secondary small mb-0">Skor terbaik tersimpan otomatis di browser. Tantang terus rekormu sendiri!</p>
+          </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 fade-in">
+          <div class="card border-0 h-100 p-4 text-center feature-card">
+            <div class="p-3 rounded-circle d-inline-flex mx-auto mb-3" style="background:#1a0d2b;">
+              <i class="bi bi-controller fs-2" style="color:#a78bfa;"></i>
+            </div>
+            <h5 class="fw-bold mb-2" style="color:#a3e6a3;">Multi-Control</h5>
+            <p class="text-secondary small mb-0">Arrow Keys, WASD, dan tombol layar sentuh untuk mobile — semua didukung!</p>
+          </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 fade-in">
+          <div class="card border-0 h-100 p-4 text-center feature-card">
+            <div class="p-3 rounded-circle d-inline-flex mx-auto mb-3" style="background:#0d1a2b;">
+              <i class="bi bi-pause-circle-fill fs-2" style="color:#38bdf8;"></i>
+            </div>
+            <h5 class="fw-bold mb-2" style="color:#a3e6a3;">Pause & Resume</h5>
+            <p class="text-secondary small mb-0">Tekan Space kapanpun untuk pause dan lanjutkan game sesukamu.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CARA BERMAIN ===== -->
+  <section class="py-5">
+    <div class="container py-4">
+      <div class="text-center mb-5 fade-in">
+        <h2 class="arcade-font text-snake" style="font-size:1.2rem;">CARA BERMAIN</h2>
+        <div class="section-accent mx-auto mt-3"></div>
+      </div>
+      <div class="row g-4 justify-content-center">
+
+        <div class="col-lg-4 col-md-6 fade-in">
+          <div class="d-flex gap-3 align-items-start">
+            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+              style="width:48px;height:48px;background:#0d2b0d;border:2px solid #22c55e;color:#22c55e;font-family:'Press Start 2P',monospace;font-size:0.8rem;">1</div>
+            <div>
+              <h5 class="fw-bold mb-1" style="color:#a3e6a3;">Klik "Main Sekarang"</h5>
+              <p class="text-secondary small mb-0">Buka halaman game dan tekan tombol Mulai.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6 fade-in">
+          <div class="d-flex gap-3 align-items-start">
+            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+              style="width:48px;height:48px;background:#0d2b0d;border:2px solid #22c55e;color:#22c55e;font-family:'Press Start 2P',monospace;font-size:0.8rem;">2</div>
+            <div>
+              <h5 class="fw-bold mb-1" style="color:#a3e6a3;">Kendalikan Ular</h5>
+              <p class="text-secondary small mb-0">Gunakan Arrow Keys atau WASD. Makan titik merah untuk tumbuh dan menambah skor.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6 fade-in">
+          <div class="d-flex gap-3 align-items-start">
+            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+              style="width:48px;height:48px;background:#0d2b0d;border:2px solid #22c55e;color:#22c55e;font-family:'Press Start 2P',monospace;font-size:0.8rem;">3</div>
+            <div>
+              <h5 class="fw-bold mb-1" style="color:#a3e6a3;">Hindari Dinding</h5>
+              <p class="text-secondary small mb-0">Jangan menabrak dinding atau tubuh ularmu sendiri — game over!</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6 fade-in">
+          <div class="d-flex gap-3 align-items-start">
+            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+              style="width:48px;height:48px;background:#0d2b0d;border:2px solid #22c55e;color:#22c55e;font-family:'Press Start 2P',monospace;font-size:0.8rem;">4</div>
+            <div>
+              <h5 class="fw-bold mb-1" style="color:#a3e6a3;">Naik Level</h5>
+              <p class="text-secondary small mb-0">Setiap 50 poin kamu naik level — kecepatan bertambah!</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6 fade-in">
+          <div class="d-flex gap-3 align-items-start">
+            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+              style="width:48px;height:48px;background:#0d2b0d;border:2px solid #22c55e;color:#22c55e;font-family:'Press Start 2P',monospace;font-size:0.8rem;">5</div>
+            <div>
+              <h5 class="fw-bold mb-1" style="color:#a3e6a3;">Cetak Rekor!</h5>
+              <p class="text-secondary small mb-0">Kalahkan high score-mu dan kirim feedback ke Steven!</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="text-center mt-5 fade-in">
+        <a href="profile.html" class="btn btn-success btn-lg px-5 fw-bold py-3">
+          <i class="bi bi-controller me-2"></i>MULAI BERMAIN SEKARANG
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== TENTANG PEMBUAT ===== -->
+  <section class="py-5" style="background:#080f08;">
+    <div class="container py-4">
+      <div class="text-center mb-5 fade-in">
+        <h2 class="arcade-font text-snake" style="font-size:1.1rem;">TENTANG PEMBUAT</h2>
+        <div class="section-accent mx-auto mt-3"></div>
+      </div>
+      <div class="row align-items-center g-5 justify-content-center">
+        <div class="col-md-auto text-center fade-in">
+          <img src="https://ui-avatars.com/api/?name=Steven+Valentius+Young&size=200&background=22c55e&color=050f05&rounded=true&bold=true"
+            class="avatar-ring" alt="Steven Valentius Young" style="width:150px;height:150px;" />
+        </div>
+        <div class="col-md-6 fade-in">
+          <h3 class="fw-bold mb-1" style="color:#a3e6a3;">Steven Valentius Young</h3>
+          <p class="mb-3 fw-semibold" style="color:#22c55e;">Game Developer & Web Enthusiast</p>
+          <p class="text-secondary mb-4">
+            Snake Game ini dibuat oleh Steven Valentius Young sebagai karya tugas kuliah —
+            mengimplementasikan logika game klasik dengan HTML5 Canvas, JavaScript murni,
+            dan Bootstrap 5 sebagai framework styling utama.
+          </p>
+          <div class="d-flex flex-wrap gap-2">
+            <span class="badge px-3 py-2" style="background:#0d2b0d;color:#22c55e;border:1px solid #22c55e;">HTML5 Canvas</span>
+            <span class="badge px-3 py-2" style="background:#0d2b0d;color:#22c55e;border:1px solid #22c55e;">JavaScript</span>
+            <span class="badge px-3 py-2" style="background:#0d2b0d;color:#22c55e;border:1px solid #22c55e;">Bootstrap 5</span>
+            <span class="badge px-3 py-2" style="background:#0d2b0d;color:#22c55e;border:1px solid #22c55e;">CSS3</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== STATS ===== -->
+  <section class="py-5">
+    <div class="container py-4">
+      <div class="row g-4 text-center">
+        <div class="col-6 col-md-3 fade-in">
+          <div class="p-4 rounded-3" style="background:#0d1f0d;border:1px solid #1a3d1a;">
+            <div class="display-4 fw-bold score-ticker text-snake" data-target="500">0</div>
+            <div class="mt-2 small" style="color:#a3e6a3;">Best Score</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3 fade-in">
+          <div class="p-4 rounded-3" style="background:#0d1f0d;border:1px solid #1a3d1a;">
+            <div class="display-4 fw-bold score-ticker" style="color:#f59e0b;" data-target="10">0</div>
+            <div class="mt-2 small" style="color:#a3e6a3;">Level Tertinggi</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3 fade-in">
+          <div class="p-4 rounded-3" style="background:#0d1f0d;border:1px solid #1a3d1a;">
+            <div class="display-4 fw-bold score-ticker" style="color:#ef4444;" data-target="100">0</div>
+            <div class="mt-2 small" style="color:#a3e6a3;">Makanan Dimakan</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3 fade-in">
+          <div class="p-4 rounded-3" style="background:#0d1f0d;border:1px solid #1a3d1a;">
+            <div class="display-4 fw-bold score-ticker" style="color:#a78bfa;" data-target="3">0</div>
+            <div class="mt-2 small" style="color:#a3e6a3;">Halaman Website</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="py-4 text-center">
+    <div class="container">
+      <p class="arcade-font mb-1" style="font-size:0.45rem;color:#22c55e;letter-spacing:2px;">GAME OVER? TRY AGAIN!</p>
+      <p class="mb-0 small text-secondary">
+        Snake Game &copy; 2024 — Dibuat oleh <span style="color:#22c55e;font-weight:700;">Steven Valentius Young</span>
+        menggunakan HTML5, Bootstrap 5, dan JavaScript.
+      </p>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // ===== SCROLL FADE-IN ANIMATION =====
+    // Semua elemen .fade-in akan muncul halus saat di-scroll
+    const fadeEls = document.querySelectorAll('.fade-in');
+    const fadeObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          fadeObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    fadeEls.forEach(el => fadeObserver.observe(el));
+
+    // Langsung tampilkan elemen hero saat halaman dimuat
+    setTimeout(() => {
+      document.querySelectorAll('.hero-section .fade-in').forEach(el => el.classList.add('visible'));
+    }, 80);
+
+    // ===== COUNTER ANIMASI (SECTION STATS) =====
+    // Angka count up dari 0 ke target
+    function animateCounter(el, target, duration) {
+      duration = duration || 1600;
+      var start = 0;
+      var step = target / (duration / 16);
+      var timer = setInterval(function () {
+        start += step;
+        if (start >= target) {
+          el.textContent = target;
+          clearInterval(timer);
+        } else {
+          el.textContent = Math.floor(start);
+        }
+      }, 16);
+    }
+
+    var statEls = document.querySelectorAll('.score-ticker[data-target]');
+    var counterDone = false;
+    var statObs = new IntersectionObserver(function (entries) {
+      if (entries[0].isIntersecting && !counterDone) {
+        counterDone = true;
+        statEls.forEach(function (el) {
+          animateCounter(el, parseInt(el.getAttribute('data-target')));
+        });
+        statObs.disconnect();
+      }
+    }, { threshold: 0.3 });
+    if (statEls.length) statObs.observe(statEls[0].closest('section'));
+
+    // ===== PREVIEW CANVAS (HERO KANAN) =====
+    // Menampilkan ular yang berjalan otomatis menggunakan AI sederhana
+    var previewCanvas = document.getElementById('previewCanvas');
+    if (previewCanvas) {
+      var pctx = previewCanvas.getContext('2d');
+      var PGRID = 14;
+      var PCOLS = Math.floor(previewCanvas.width / PGRID);
+      var PROWS = Math.floor(previewCanvas.height / PGRID);
+      var pSnake = [{x:10,y:10},{x:9,y:10},{x:8,y:10},{x:7,y:10}];
+      var pFood  = {x:15, y:10};
+      var pDir   = {x:1, y:0};
+      var pScore = 0;
+
+      // AI: pilih arah yang menuju ke makanan
+      function getNextDir() {
+        var head = pSnake[0];
+        var dx = pFood.x - head.x;
+        var dy = pFood.y - head.y;
+        var candidates = [];
+        if (Math.abs(dx) >= Math.abs(dy)) {
+          candidates.push(dx > 0 ? {x:1,y:0} : {x:-1,y:0});
+          candidates.push(dy > 0 ? {x:0,y:1} : {x:0,y:-1});
+        } else {
+          candidates.push(dy > 0 ? {x:0,y:1} : {x:0,y:-1});
+          candidates.push(dx > 0 ? {x:1,y:0} : {x:-1,y:0});
+        }
+        [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}].forEach(function(d) {
+          if (!candidates.find(function(c){return c.x===d.x&&c.y===d.y;})) candidates.push(d);
+        });
+        for (var i = 0; i < candidates.length; i++) {
+          var d = candidates[i];
+          if (d.x === -pDir.x && d.y === -pDir.y) continue;
+          var nx = head.x + d.x, ny = head.y + d.y;
+          if (nx < 0 || nx >= PCOLS || ny < 0 || ny >= PROWS) continue;
+          if (pSnake.some(function(s){return s.x===nx&&s.y===ny;})) continue;
+          return d;
+        }
+        return pDir;
+      }
+
+      // Taruh makanan di posisi acak
+      function placePFood() {
+        var pos;
+        do {
+          pos = {x: Math.floor(Math.random()*PCOLS), y: Math.floor(Math.random()*PROWS)};
+        } while (pSnake.some(function(s){return s.x===pos.x&&s.y===pos.y;}));
+        pFood = pos;
+      }
+
+      // Gambar canvas preview
+      function drawPreview() {
+        pctx.fillStyle = '#050f05';
+        pctx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
+        pctx.strokeStyle = '#0d1f0d'; pctx.lineWidth = 0.5;
+        for (var x=0; x<=previewCanvas.width; x+=PGRID) { pctx.beginPath(); pctx.moveTo(x,0); pctx.lineTo(x,previewCanvas.height); pctx.stroke(); }
+        for (var y=0; y<=previewCanvas.height; y+=PGRID) { pctx.beginPath(); pctx.moveTo(0,y); pctx.lineTo(previewCanvas.width,y); pctx.stroke(); }
+        // Makanan
+        var fx = pFood.x*PGRID+PGRID/2, fy = pFood.y*PGRID+PGRID/2;
+        pctx.fillStyle = '#ef4444'; pctx.shadowColor = '#ef4444'; pctx.shadowBlur = 10;
+        pctx.beginPath(); pctx.arc(fx, fy, PGRID/2-2, 0, Math.PI*2); pctx.fill();
+        pctx.shadowBlur = 0;
+        // Ular
+        pSnake.forEach(function(seg, i) {
+          var r = i / pSnake.length;
+          pctx.fillStyle = i===0 ? '#22c55e' : ('hsl('+(140-r*20)+','+(80-r*20)+'%,'+(45-r*20)+'%)');
+          pctx.shadowColor = i===0 ? '#22c55e' : 'transparent';
+          pctx.shadowBlur  = i===0 ? 8 : 0;
+          pctx.beginPath(); pctx.roundRect(seg.x*PGRID+1, seg.y*PGRID+1, PGRID-2, PGRID-2, i===0?4:2); pctx.fill();
+          pctx.shadowBlur = 0;
+        });
+        // Skor
+        pctx.fillStyle = '#22c55e'; pctx.font = '9px "Press Start 2P", monospace';
+        pctx.textAlign = 'left'; pctx.fillText('SCORE: '+pScore, 6, 14);
+      }
+
+      // Update state game preview setiap frame
+      function updatePreview() {
+        pDir = getNextDir();
+        var head = {x: pSnake[0].x+pDir.x, y: pSnake[0].y+pDir.y};
+        if (head.x<0||head.x>=PCOLS||head.y<0||head.y>=PROWS||pSnake.some(function(s){return s.x===head.x&&s.y===head.y;})) {
+          pSnake = [{x:10,y:10},{x:9,y:10},{x:8,y:10}]; pDir={x:1,y:0}; pScore=0; placePFood(); return;
+        }
+        pSnake.unshift(head);
+        if (head.x===pFood.x && head.y===pFood.y) { pScore+=10; placePFood(); }
+        else pSnake.pop();
+        drawPreview();
+      }
+
+      drawPreview();
+      setInterval(updatePreview, 130);
+    }
+  </script>
+</body>
+</html>
